@@ -1,0 +1,7 @@
+{
+	"health": ["therapy", "massage"],
+	"children": ["education", "play"],
+	"education": ["math", "english"],
+	"beauty": ["manicure", "pedicure"],
+	"home": ["babysitter", "cleaning", "housekeeper", "gardener"]
+}
