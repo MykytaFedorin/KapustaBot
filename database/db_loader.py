@@ -1,8 +1,10 @@
 import psycopg2 as psql
+from decimal import Decimal
 from psycopg2.errors import UniqueViolation
 from typing import NamedTuple
 from aiogram.types import InputFile
 from data import data_dir_path
+from decimal import Decimal
 from datetime import datetime
 
 
@@ -13,9 +15,48 @@ class Product(NamedTuple):
     product_id: int
     name: str
     description: str
-    price: float
+    price: Decimal
     photo: InputFile
     available_amount: int
+
+
+class Orderitem(NamedTuple):
+    item_id: int
+    order_id: int
+    product_id: int
+    quantity: int
+    subtotal: Decimal
+
+
+async def update_total(order_id: int) -> None:
+    '''Updates total price of an order'''
+    total_price = await get_order_total(order_id)
+    cursor.execute(f'''UPDATE order_ SET total_price = {total_price} WHERE order_id = {order_id}''')
+    connection.commit()
+
+
+async def get_order_total(order_id: int) -> Decimal:
+    cursor.execute(f'''SELECT subtotal FROM orderitem WHERE order_id = {order_id}''')
+    prices = cursor.fetchall()
+    total = Decimal(0)
+    for price in prices:
+        total += price[0]
+    return total
+
+
+async def get_orderitems(order_id) -> list[Orderitem]:
+    '''Return the list of orderitems which belongs to order with provided id'''
+    cursor.execute(f'''SELECT * FROM orderitem WHERE order_id = {order_id}''')
+    items = cursor.fetchall()
+    res_items = list()
+    for item in items:
+        res_items.append(Orderitem(item_id = item[0],
+                                   order_id = item[1],
+                                   product_id = item[2],
+                                   quantity = item[3],
+                                   subtotal = item[4]))
+    return res_items
+
 
 async def create_customer_(telegram_id: int, name: str, phone: str):
     '''Create a record with customer info'''
@@ -43,13 +84,28 @@ async def get_products() -> list[Product]:
                                         photo = InputFile(photo_path), 
                                         available_amount = product[5]))
     return products_wrapped 
+
+
+async def get_cart_text(order_id: int) -> str:
+    '''return a string with full
+    description of which products are now in cart''' 
+    items = await get_orderitems(order_id)
+    cart_text = 'Корзина: \n\n'
+    for index, item in enumerate(items):
+        product = await get_product_by_id(item.product_id)
+        cart_text += f'{index+1}. {product.name} {item.quantity}шт. {product.price}€\n\n'
+    total = await get_order_total(order_id)
+    cart_text += f'Всего: {total}€'
+    return cart_text
+
+
 def get_product_ids() -> list[int]:
     '''return a list of all product id's'''
     cursor.execute('''SELECT product_id FROM product;''')
     return [int(id_[0]) for id_ in cursor.fetchall()]
 
 
-async def create_order(customer_id: int, first_product_price: int) -> int:
+async def create_order(customer_id: int) -> int:
     '''intiales the order in db'''
     while True:
         try:
@@ -61,7 +117,7 @@ async def create_order(customer_id: int, first_product_price: int) -> int:
             cursor.execute(f'''INSERT INTO order_ 
                               (customer_id, total_price, status)
                               VALUES 
-                              ({customer_id}, {first_product_price}.00, 'PENDING');''')
+                              ({customer_id}, 0.00, 'PENDING');''')
             connection.commit()
     return id_
 
@@ -75,7 +131,7 @@ async def create_customer(customer_id: int, name: str, phone: str):
     connection.commit()
 
 
-async def create_orderitem(order_id: int, product_id: int, price: float):
+async def create_orderitem(order_id: int, product_id: int, price: Decimal):
     '''creates an orderitem record in db'''
     cursor.execute(f'''SELECT quantity FROM orderitem WHERE
                       order_id = {order_id} AND product_id = {product_id};''')

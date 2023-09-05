@@ -1,9 +1,9 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-kb_menu = ReplyKeyboardMarkup([
+menu_kb = ReplyKeyboardMarkup([
     [
-        KeyboardButton(text="Общая информация"),
-        KeyboardButton(text="Сделать заказ"),
+        KeyboardButton(text="Показать корзину"),
+        KeyboardButton(text="Показать товары"),
     ]
 ],
     resize_keyboard=True)
