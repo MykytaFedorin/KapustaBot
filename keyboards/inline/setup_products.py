@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 def create_ikb(callback_data: str) -> InlineKeyboardMarkup:
     buy_product_kb = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [
-            InlineKeyboardButton(text="<code style='color:red'>Добавить в корзину</code>", 
+            InlineKeyboardButton(text='Изменить фото', 
                                  callback_data=callback_data),
         ]
     ])

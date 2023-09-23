@@ -28,6 +28,12 @@ class Orderitem(NamedTuple):
     subtotal: Decimal
 
 
+async def finish_order(order_id:int) -> None:
+    ''' Switch order with provided id in FINISH status'''
+    cursor.execute(f'''UPDATE order_ SET status = 'FINISH' WHERE order_id = {order_id}''')
+    connection.commit()
+
+
 async def update_total(order_id: int) -> None:
     '''Updates total price of an order'''
     total_price = await get_order_total(order_id)
@@ -58,12 +64,12 @@ async def get_orderitems(order_id) -> list[Orderitem]:
     return res_items
 
 
-async def create_customer_(telegram_id: int, name: str, phone: str):
+async def create_customer_(telegram_id: int, name: str):
     '''Create a record with customer info'''
     try:
         cursor.execute(f'''INSERT INTO customer 
-                          (telegram_id, name, phone)
-                          VALUES ({telegram_id}, '{name}', '{phone}');''');
+                          (telegram_id, name)
+                          VALUES ({telegram_id}, '{name}');''');
     except UniqueViolation as ex:
         pass
     connection.commit()
@@ -136,7 +142,6 @@ async def create_orderitem(order_id: int, product_id: int, price: Decimal):
     cursor.execute(f'''SELECT quantity FROM orderitem WHERE
                       order_id = {order_id} AND product_id = {product_id};''')
     quantity = cursor.fetchone()
-    print(quantity)
     if quantity is None:
         cursor.execute(f'''INSERT INTO orderitem 
                           (order_id, product_id, quantity, subtotal)
@@ -161,3 +166,13 @@ async def get_product_by_id(product_id: int) -> Product:
                    price = product[3], 
                    photo = InputFile(photo_path), 
                    available_amount = product[5])
+
+
+async def create_product(name: str, description: str, 
+                         price: Decimal, image_url: str, amount: int):
+    '''Creates new product record in db'''
+    cursor.execute(f'''INSERT INTO product 
+                    (name, description, price, image_url, amount)
+                    VALUES
+                    ('{name}', '{description}', {price}, '{image_url}', {amount})''')
+    connection.commit()

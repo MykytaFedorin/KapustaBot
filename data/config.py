@@ -5,4 +5,4 @@ load_dotenv()
 
 BOT_TOKEN = str(os.getenv("BOT_TOKEN"))
 
-admins_id = [str(os.getenv("ADMIN_ID"))]
+admins_id = [int(os.getenv("ADMIN_ID"))]
