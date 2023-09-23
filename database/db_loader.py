@@ -4,11 +4,12 @@ from psycopg2.errors import UniqueViolation
 from typing import NamedTuple
 from aiogram.types import InputFile
 from data import data_dir_path
+from data.config import db_user, db_database
 from decimal import Decimal
 from datetime import datetime
 
 
-connection = psql.connect("dbname=myshop user=nikita")
+connection = psql.connect(f"dbname={db_database} user={db_user}")
 cursor = connection.cursor()
 
 class Product(NamedTuple):
