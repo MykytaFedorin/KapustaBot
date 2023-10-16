@@ -20,7 +20,7 @@ CREATE TABLE Order_ (
     status VARCHAR(20)
 );
 
-CREATE TABLE OrderItems (
+CREATE TABLE OrderItem (
     item_id SERIAL PRIMARY KEY,
     order_id INT REFERENCES Order_(order_id),
     product_id INT REFERENCES Product(product_id),
