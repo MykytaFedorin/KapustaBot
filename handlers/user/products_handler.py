@@ -22,11 +22,6 @@ async def start(message: Message, state: FSMContext):
 @dp.message_handler(text = 'Показать товары',
                     state = '*')
 async def show_products(message: Message, state: FSMContext):
-    await db.create_customer_(telegram_id = message.from_user.id,
-                             name = message.from_user.full_name)
-    order_id = await db.create_order(message.from_user.id)
-    await state.update_data(order_id=order_id)
-    await state.update_data(customer_name=message.from_user.full_name)
     products = await db.get_products()
     for product in products:
         description = f'{product.name} {product.price}€ \n\n{product.description}   \n\nОсталось: {product.available_amount}'
@@ -73,8 +68,10 @@ async def finish_order(callback_query: CallbackQuery, state: FSMContext):
 async def add_product_to_order(callback_query: CallbackQuery, state: FSMContext):
     product_id = callback_query.data
     product  = await db.get_product_by_id(int(product_id))
-    data = await state.get_data()
-    order_id = data['order_id']
+    order_id = await db.create_order(callback_query.from_user.id)
+    await db.create_customer_(telegram_id = callback_query.from_user.id,
+                             name = callback_query.from_user.full_name)
+    await state.update_data(customer_name=callback_query.from_user.full_name)
     await db.create_orderitem(order_id, product.product_id, product.price)
     await db.update_total(order_id)
     await callback_query.answer('Товар добавлен в корзину')
