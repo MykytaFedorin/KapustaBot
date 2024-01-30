@@ -7,6 +7,7 @@ from data import data_dir_path
 from data.config import db_user, db_database
 from decimal import Decimal
 from datetime import datetime
+from typing import List
 
 
 connection = psql.connect(f"dbname={db_database} user={db_user}")
@@ -177,3 +178,11 @@ async def create_product(name: str, description: str,
                     VALUES
                     ('{name}', '{description}', {price}, '{image_url}', {amount})''')
     connection.commit()
+
+
+async def get_customer_ids() -> List[int]:
+    '''Return all customers ids'''
+    cursor.execute(f'''SELECT telegram_id FROM customer''')
+    values = cursor.fetchall()
+    ids = [int(value[0]) for value in values]
+    return ids

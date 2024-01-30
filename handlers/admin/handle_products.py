@@ -7,7 +7,8 @@ from states import AddProduct
 
 
 @dp.message_handler(lambda message: message.from_user.id in admins_id,
-                    commands='my_products')
+                    commands='my_products', 
+                    state="*")
 async def show_products(message: Message):
     '''Show all existing products to admin'''
     products = await db.get_products()
@@ -16,6 +17,15 @@ async def show_products(message: Message):
         await bot.send_photo(chat_id = message.from_id,
                              photo = product.photo, 
                              caption = description)
+
+
+@dp.message_handler(commands='share_message',
+                    state='*')
+async def share_message(message: Message):
+    text = message.text.replace("/share_message", "")
+    ids = await db.get_customer_ids()
+    for id_ in ids:    
+        await bot.send_message(chat_id=id_, text = text)
 
 
 @dp.message_handler(lambda message: message.from_user.id in admins_id,

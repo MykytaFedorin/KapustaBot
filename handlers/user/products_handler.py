@@ -55,11 +55,11 @@ async def finish_order(callback_query: CallbackQuery, state: FSMContext):
     customer_name = state_data['customer_name']
     order_text = await db.get_cart_text(order_id)
     order_text = order_text.replace('Корзина:', f'Заказ №{order_id} {customer_name}')
-    await Order_.end_order.set()
     await db.finish_order(order_id)
     for id_ in admins_id:
         await bot.send_message(chat_id=id_,
                                text=order_text)
+    await state.finish()
     await bot.send_message(chat_id=callback_query.from_user.id, text=order_text)
 
 
@@ -68,10 +68,11 @@ async def finish_order(callback_query: CallbackQuery, state: FSMContext):
 async def add_product_to_order(callback_query: CallbackQuery, state: FSMContext):
     product_id = callback_query.data
     product  = await db.get_product_by_id(int(product_id))
-    order_id = await db.create_order(callback_query.from_user.id)
     await db.create_customer_(telegram_id = callback_query.from_user.id,
                              name = callback_query.from_user.full_name)
-    await state.update_data(customer_name=callback_query.from_user.full_name)
+    order_id = await db.create_order(callback_query.from_user.id)
+    await state.update_data(customer_name=callback_query.from_user.full_name, 
+                            order_id = order_id)
     await db.create_orderitem(order_id, product.product_id, product.price)
     await db.update_total(order_id)
     await callback_query.answer('Товар добавлен в корзину')
